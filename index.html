@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MARKET PULSE — Análisis Bursátil Global</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #04060f;
+    --surface: #080d1a;
+    --surface2: #0e1525;
+    --border: #1a2540;
+    --green: #00e5a0;
+    --red: #ff3d5a;
+    --gold: #f5c542;
+    --blue: #3d8eff;
+    --text: #c8d8f0;
+    --muted: #4a5a7a;
+    --white: #eef4ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRID BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(61,142,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(61,142,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(4,6,15,0.92);
+    backdrop-filter: blur(12px);
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 12px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .ticker-bar {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .ticker-bar::before, .ticker-bar::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 40px;
+    z-index: 2;
+  }
+  .ticker-bar::before { left: 0; background: linear-gradient(90deg, rgba(4,6,15,0.92), transparent); }
+  .ticker-bar::after { right: 0; background: linear-gradient(-90deg, rgba(4,6,15,0.92), transparent); }
+
+  .ticker-track {
+    display: flex;
+    gap: 32px;
+    animation: ticker 35s linear infinite;
+    white-space: nowrap;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+  }
+
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .tick-item { display: flex; gap: 8px; align-items: center; }
+  .tick-name { color: var(--muted); }
+  .tick-val { color: var(--white); }
+  .tick-chg.up { color: var(--green); }
+  .tick-chg.down { color: var(--red); }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+    animation: pulse 1s infinite;
+  }
+
+  /* MAIN LAYOUT */
+  main { padding: 32px 0; display: grid; gap: 28px; }
+
+  /* INDICES GRID */
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    color: var(--white);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .indices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .index-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .index-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--blue), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .index-card:hover { border-color: var(--blue); transform: translateY(-2px); }
+  .index-card:hover::before { opacity: 1; }
+  .index-card.up .change { color: var(--green); }
+  .index-card.down .change { color: var(--red); }
+  .index-card.up { border-top-color: var(--green); }
+  .index-card.down { border-top-color: var(--red); }
+
+  .index-flag { font-size: 20px; margin-bottom: 8px; }
+  .index-name { font-size: 13px; color: var(--muted); font-family: 'Space Mono', monospace; letter-spacing: 1px; }
+  .index-value { font-size: 22px; font-weight: 600; color: var(--white); margin: 4px 0; letter-spacing: -0.5px; }
+  .change { font-family: 'Space Mono', monospace; font-size: 13px; display: flex; align-items: center; gap: 4px; }
+  .mini-chart { height: 32px; margin-top: 12px; }
+  .mini-chart svg { width: 100%; height: 100%; }
+
+  /* AI ANALYSIS PANEL */
+  .ai-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .ai-panel-header {
+    padding: 20px 24px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .ai-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #3d8eff22, #3d8eff44);
+    border: 1px solid #3d8eff44;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .ai-panel-title { font-size: 16px; font-weight: 600; color: var(--white); }
+  .ai-panel-sub { font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+  .analyze-btn {
+    margin-left: auto;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .analyze-btn:hover { background: #5aa0ff; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(61,142,255,0.3); }
+  .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .selector-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .selector-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .selector-btn:hover { border-color: var(--blue); color: var(--blue); }
+  .selector-btn.active { background: rgba(61,142,255,0.15); border-color: var(--blue); color: var(--blue); }
+
+  .ai-body { padding: 24px; min-height: 200px; }
+
+  .ai-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 180px;
+    gap: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .ai-placeholder-icon { font-size: 40px; opacity: 0.4; }
+
+  .ai-response {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  .ai-response h3 {
+    color: var(--white);
+    font-size: 16px;
+    font-weight: 600;
+    margin: 16px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ai-response h3:first-child { margin-top: 0; }
+
+  .ai-response .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .tag.green { background: rgba(0,229,160,0.12); color: var(--green); }
+  .tag.red { background: rgba(255,61,90,0.12); color: var(--red); }
+  .tag.gold { background: rgba(245,197,66,0.12); color: var(--gold); }
+  .tag.blue { background: rgba(61,142,255,0.12); color: var(--blue); }
+
+  .ai-response ul { padding-left: 20px; }
+  .ai-response li { margin-bottom: 6px; }
+  .ai-response strong { color: var(--white); }
+
+  /* LOADING */
+  .loading-anim {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 180px;
+    gap: 16px;
+  }
+
+  .loading-bar {
+    width: 280px; height: 3px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .loading-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), var(--green));
+    border-radius: 10px;
+    animation: loading 1.5s ease-in-out infinite;
+  }
+
+  @keyframes loading {
+    0% { width: 0; margin-left: 0; }
+    50% { width: 60%; margin-left: 20%; }
+    100% { width: 0; margin-left: 100%; }
+  }
+
+  .loading-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    animation: blink 1.2s infinite;
+  }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* BOTTOM GRID */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 700px) { .bottom-grid { grid-template-columns: 1fr; } }
+
+  .mini-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+
+  .fear-meter {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .meter-bar {
+    width: 100%;
+    height: 12px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .meter-fill {
+    height: 100%;
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--green), var(--gold), var(--red));
+    transition: width 0.8s ease;
+  }
+
+  .meter-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+  }
+
+  .fear-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    line-height: 1;
+    letter-spacing: 2px;
+  }
+
+  .fear-label { font-size: 13px; color: var(--muted); }
+
+  .sector-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .sector-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .sector-name { width: 120px; color: var(--muted); }
+  .sector-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 10px; overflow: hidden; }
+  .sector-bar { height: 100%; border-radius: 10px; transition: width 0.6s; }
+  .sector-pct { width: 50px; text-align: right; font-family: 'Space Mono', monospace; font-size: 12px; }
+  .sector-pct.up { color: var(--green); }
+  .sector-pct.down { color: var(--red); }
+
+  /* CUSTOM INPUT */
+  .ask-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 24px;
+  }
+
+  .ask-input-wrap {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .ask-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .ask-input:focus { border-color: var(--blue); }
+  .ask-input::placeholder { color: var(--muted); }
+
+  .ask-btn {
+    background: linear-gradient(135deg, var(--blue), #5aa0ff);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 22px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .ask-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(61,142,255,0.3); }
+  .ask-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .ask-response {
+    margin-top: 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+    border-left: 3px solid var(--blue);
+    padding-left: 16px;
+    display: none;
+  }
+
+  .ask-response.visible { display: block; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .cursor-blink {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--blue);
+    margin-left: 2px;
+    vertical-align: middle;
+    animation: blink 0.8s step-end infinite;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-dot"></div>
+        MARKET PULSE
+      </div>
+      <div class="ticker-bar">
+        <div class="ticker-track" id="tickerTrack"></div>
+      </div>
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        <span id="liveTime">--:--:--</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <main>
+
+    <!-- INDICES -->
+    <section>
+      <div class="section-title">ÍNDICES GLOBALES</div>
+      <div class="indices-grid" id="indicesGrid"></div>
+    </section>
+
+    <!-- AI ANALYSIS -->
+    <section>
+      <div class="ai-panel">
+        <div class="ai-panel-header">
+          <div class="ai-icon">🤖</div>
+          <div>
+            <div class="ai-panel-title">Análisis IA del Mercado</div>
+            <div class="ai-panel-sub">Powered by Claude · Análisis en tiempo real</div>
+          </div>
+          <div class="selector-group" id="selectorGroup">
+            <button class="selector-btn active" data-mode="general">Visión General</button>
+            <button class="selector-btn" data-mode="causas">Causas</button>
+            <button class="selector-btn" data-mode="sectores">Sectores</button>
+            <button class="selector-btn" data-mode="outlook">Perspectivas</button>
+          </div>
+          <button class="analyze-btn" id="analyzeBtn">
+            ⚡ Analizar Ahora
+          </button>
+        </div>
+        <div class="ai-body" id="aiBody">
+          <div class="ai-placeholder">
+            <div class="ai-placeholder-icon">📊</div>
+            <div>Selecciona un modo de análisis y pulsa <strong>Analizar Ahora</strong></div>
+            <div style="font-size:13px; color: var(--muted)">La IA explicará qué está moviendo los mercados hoy</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOTTOM GRID -->
+    <div class="bottom-grid">
+
+      <!-- FEAR & GREED -->
+      <div class="mini-panel">
+        <div class="section-title" style="font-size:16px; margin-bottom:20px">MIEDO & CODICIA</div>
+        <div class="fear-meter">
+          <div style="display:flex; align-items:flex-end; gap:16px">
+            <div class="fear-value" id="fearValue" style="color: var(--gold)">--</div>
+            <div>
+              <div class="fear-label" id="fearLabel">Calculando...</div>
+              <div style="font-size:12px; color: var(--muted); font-family: 'Space Mono', monospace;">Índice 0–100</div>
+            </div>
+          </div>
+          <div class="meter-bar">
+            <div class="meter-fill" id="meterFill" style="width: 0%"></div>
+          </div>
+          <div class="meter-labels">
+            <span>Miedo Extremo</span>
+            <span>Neutral</span>
+            <span>Codicia Extrema</span>
+          </div>
+          <div style="font-size:13px; color: var(--muted); margin-top:8px; line-height:1.6" id="fearDesc">
+            Analizando el sentimiento del mercado global...
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTORES -->
+      <div class="mini-panel">
+        <div class="section-title" style="font-size:16px; margin-bottom:20px">RENDIMIENTO SECTORIAL</div>
+        <div class="sector-list" id="sectorList"></div>
+      </div>
+    </div>
+
+    <!-- PREGUNTAR A LA IA -->
+    <section class="ask-section">
+      <div class="section-title" style="font-size:16px; margin-bottom:4px">PREGUNTA A LA IA</div>
+      <div style="font-size:13px; color: var(--muted); margin-bottom: 4px">Haz cualquier pregunta sobre la situación actual de los mercados</div>
+      <div class="ask-input-wrap">
+        <input class="ask-input" id="askInput" type="text"
+          placeholder="Ej: ¿Por qué está cayendo la bolsa hoy? ¿Qué sectores resistirán mejor una recesión?" />
+        <button class="ask-btn" id="askBtn">Preguntar →</button>
+      </div>
+      <div class="ask-response" id="askResponse"></div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ─── MARKET DATA ──────────────────────────────────────────────
+const INDICES = [
+  { id:'sp500',  flag:'🇺🇸', name:'S&P 500',     base:5248, region:'EE.UU.' },
+  { id:'nasdaq', flag:'🇺🇸', name:'NASDAQ',      base:16400, region:'EE.UU.' },
+  { id:'dow',    flag:'🇺🇸', name:'DOW JONES',   base:39100, region:'EE.UU.' },
+  { id:'ftse',   flag:'🇬🇧', name:'FTSE 100',    base:8280,  region:'Reino Unido' },
+  { id:'dax',    flag:'🇩🇪', name:'DAX',         base:18500, region:'Alemania' },
+  { id:'cac',    flag:'🇫🇷', name:'CAC 40',      base:8180,  region:'Francia' },
+  { id:'nikkei', flag:'🇯🇵', name:'NIKKEI 225',  base:39800, region:'Japón' },
+  { id:'hang',   flag:'🇭🇰', name:'HANG SENG',   base:18800, region:'Hong Kong' },
+  { id:'ibex',   flag:'🇪🇸', name:'IBEX 35',     base:11200, region:'España' },
+  { id:'bovespa',flag:'🇧🇷', name:'BOVESPA',     base:128000,region:'Brasil' },
+  { id:'mxipc',  flag:'🇲🇽', name:'IPC MÉXICO',  base:53500, region:'México' },
+  { id:'sensex', flag:'🇮🇳', name:'SENSEX',      base:73800, region:'India' },
+];
+
+const SECTORS = [
+  { name:'Tecnología',     base: 2.1 },
+  { name:'Energía',        base:-0.8 },
+  { name:'Salud',          base: 1.2 },
+  { name:'Financiero',     base:-0.4 },
+  { name:'Consumo',        base: 0.6 },
+  { name:'Industriales',   base:-1.1 },
+  { name:'Materiales',     base: 0.3 },
+];
+
+// Simulated live fluctuation
+function rnd(min,max){ return Math.random()*(max-min)+min; }
+function fluctuate(base, pct=0.0015){ return base * (1 + rnd(-pct, pct)); }
+
+let marketData = {};
+let sectorData = [];
+
+function initData(){
+  INDICES.forEach(idx=>{
+    const chg = rnd(-2.5, 2.5);
+    marketData[idx.id] = {
+      ...idx,
+      value: idx.base * (1 + chg/100),
+      change: chg,
+      history: Array.from({length:20}, (_,i)=> idx.base * (1 + rnd(-3,3)/100))
+    };
+  });
+  sectorData = SECTORS.map(s=>({
+    ...s,
+    change: s.base + rnd(-0.5,0.5)
+  }));
+}
+
+function updateData(){
+  INDICES.forEach(idx=>{
+    const d = marketData[idx.id];
+    const newVal = fluctuate(d.value, 0.002);
+    const chgPct = (newVal/idx.base - 1)*100;
+    d.history = [...d.history.slice(1), newVal];
+    d.value = newVal;
+    d.change = chgPct;
+  });
+}
+
+// ─── MINI SVG CHART ───────────────────────────────────────────
+function miniChart(history, isUp){
+  const w=160, h=32;
+  const min=Math.min(...history), max=Math.max(...history);
+  const range=max-min||1;
+  const pts = history.map((v,i)=>`${(i/(history.length-1))*w},${h - ((v-min)/range)*h}`).join(' ');
+  const color = isUp ? '#00e5a0' : '#ff3d5a';
+  const fill = isUp ? 'rgba(0,229,160,0.08)' : 'rgba(255,61,90,0.08)';
+  const area = pts + ` ${w},${h} 0,${h}`;
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <polygon points="${area}" fill="${fill}"/>
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+// ─── RENDER INDICES ───────────────────────────────────────────
+function renderIndices(){
+  const grid = document.getElementById('indicesGrid');
+  grid.innerHTML = Object.values(marketData).map(d=>{
+    const isUp = d.change >= 0;
+    const sign = isUp ? '+' : '';
+    return `<div class="index-card ${isUp?'up':'down'}" onclick="askAbout('${d.name}')">
+      <div class="index-flag">${d.flag}</div>
+      <div class="index-name">${d.name}</div>
+      <div class="index-value">${d.value.toLocaleString('es',{maximumFractionDigits:1})}</div>
+      <div class="change">${isUp?'▲':'▼'} ${sign}${d.change.toFixed(2)}%</div>
+      <div class="mini-chart">${miniChart(d.history, isUp)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── RENDER SECTORS ───────────────────────────────────────────
+function renderSectors(){
+  const max = Math.max(...sectorData.map(s=>Math.abs(s.change)));
+  document.getElementById('sectorList').innerHTML = sectorData.map(s=>{
+    const isUp = s.change >= 0;
+    const pct = Math.abs(s.change)/max*100;
+    const color = isUp ? 'var(--green)' : 'var(--red)';
+    return `<div class="sector-row">
+      <div class="sector-name">${s.name}</div>
+      <div class="sector-bar-wrap"><div class="sector-bar" style="width:${pct}%;background:${color}"></div></div>
+      <div class="sector-pct ${isUp?'up':'down'}">${isUp?'+':''}${s.change.toFixed(1)}%</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── FEAR & GREED ─────────────────────────────────────────────
+function renderFear(){
+  const ups = Object.values(marketData).filter(d=>d.change>=0).length;
+  const ratio = ups / Object.values(marketData).length;
+  const avgChg = Object.values(marketData).reduce((a,d)=>a+d.change,0)/Object.values(marketData).length;
+  let score = Math.round(50 + avgChg * 8 + (ratio-0.5)*20);
+  score = Math.max(5, Math.min(95, score));
+  document.getElementById('fearValue').textContent = score;
+  document.getElementById('meterFill').style.width = score+'%';
+  let label, desc, color;
+  if(score<25){label='MIEDO EXTREMO'; color='var(--red)'; desc='Los inversores huyen del riesgo. Alta volatilidad y ventas masivas en mercados globales.';}
+  else if(score<45){label='MIEDO'; color='#ff7a45'; desc='Cautela dominante. Los inversores prefieren activos refugio como bonos y oro.';}
+  else if(score<55){label='NEUTRAL'; color='var(--gold)'; desc='Equilibrio entre compradores y vendedores. Mercado en espera de catalizadores.';}
+  else if(score<75){label='CODICIA'; color='#45d4a8'; desc='Optimismo moderado. Flujos hacia renta variable y activos de riesgo en alza.';}
+  else{label='CODICIA EXTREMA'; color='var(--green)'; desc='Euforia inversora. Riesgo de sobrecompra y posible corrección próxima.';}
+  document.getElementById('fearLabel').textContent = label;
+  document.getElementById('fearValue').style.color = color;
+  document.getElementById('fearDesc').textContent = desc;
+}
+
+// ─── TICKER ───────────────────────────────────────────────────
+function renderTicker(){
+  const items = Object.values(marketData);
+  const all = [...items, ...items]; // duplicate for seamless loop
+  document.getElementById('tickerTrack').innerHTML = all.map(d=>{
+    const isUp = d.change>=0;
+    return `<div class="tick-item">
+      <span class="tick-name">${d.flag} ${d.name}</span>
+      <span class="tick-val">${d.value.toLocaleString('es',{maximumFractionDigits:0})}</span>
+      <span class="tick-chg ${isUp?'up':'down'}">${isUp?'▲':'▼'}${Math.abs(d.change).toFixed(2)}%</span>
+    </div>`;
+  }).join('');
+}
+
+// ─── CLOCK ────────────────────────────────────────────────────
+function updateClock(){
+  const now = new Date();
+  document.getElementById('liveTime').textContent =
+    now.toLocaleTimeString('es',{hour12:false}) + ' UTC';
+}
+
+// ─── AI ANALYSIS ─────────────────────────────────────────────
+function buildMarketContext(){
+  const vals = Object.values(marketData);
+  const ups = vals.filter(d=>d.change>=0);
+  const downs = vals.filter(d=>d.change<0);
+  const avgChg = (vals.reduce((a,d)=>a+d.change,0)/vals.length).toFixed(2);
+  const topGain = vals.sort((a,b)=>b.change-a.change)[0];
+  const topLoss = [...vals].sort((a,b)=>a.change-b.change)[0];
+  return `Datos actuales de mercado:
+- Promedio global de cambio: ${avgChg}%
+- Mercados al alza: ${ups.map(d=>d.name+' ('+d.change.toFixed(2)+'%)').join(', ')}
+- Mercados a la baja: ${downs.map(d=>d.name+' ('+d.change.toFixed(2)+'%)').join(', ')}
+- Mayor ganancia: ${topGain.name} (${topGain.change.toFixed(2)}%)
+- Mayor pérdida: ${topLoss.name} (${topLoss.change.toFixed(2)}%)
+- Sectores: ${sectorData.map(s=>s.name+' '+s.change.toFixed(1)+'%').join(', ')}
+Fecha: ${new Date().toLocaleDateString('es',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`;
+}
+
+const PROMPTS = {
+  general: (ctx) => `Eres un analista financiero experto. Analiza la siguiente situación actual de los mercados bursátiles mundiales y proporciona un análisis conciso pero profundo de lo que está ocurriendo, usando formato markdown con emojis cuando sea útil. Explica en términos claros qué está pasando con la bolsa mundial hoy. Responde en español.
+
+${ctx}
+
+Proporciona: 1) Resumen ejecutivo del día, 2) Qué índices destacan y por qué, 3) Tendencia dominante del mercado.`,
+
+  causas: (ctx) => `Eres un analista financiero experto. Basándote en los datos de mercado, explica las CAUSAS probables de los movimientos actuales del mercado. Considera factores macroeconómicos, geopolíticos y técnicos. Responde en español con análisis profundo.
+
+${ctx}
+
+Explica: ¿Por qué suben los que suben? ¿Por qué bajan los que bajan? ¿Qué factores globales podrían estar influyendo?`,
+
+  sectores: (ctx) => `Eres un estratega de inversiones. Analiza el rendimiento sectorial y los índices para dar insights sobre qué sectores están liderando y cuáles están rezagados, y por qué. Responde en español.
+
+${ctx}
+
+Explica la rotación sectorial, qué sectores atraen capital y qué dice esto sobre el ciclo económico actual.`,
+
+  outlook: (ctx) => `Eres un analista de mercados con perspectiva global. Basándote en los datos actuales, proporciona una perspectiva de corto y mediano plazo. ¿Qué señales técnicas y fundamentales observas? Responde en español.
+
+${ctx}
+
+Proporciona: perspectiva para las próximas sesiones, niveles clave a vigilar, y principales riesgos y oportunidades.`
+};
+
+let selectedMode = 'general';
+
+document.querySelectorAll('.selector-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.selector-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedMode = btn.dataset.mode;
+  });
+});
+
+async function analyzeMarket(){
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Analizando...';
+
+  document.getElementById('aiBody').innerHTML = `
+    <div class="loading-anim">
+      <div style="font-size:13px; color:var(--muted); font-family:'Space Mono',monospace">
+        Procesando datos de ${Object.keys(marketData).length} índices globales...
+      </div>
+      <div class="loading-bar"><div class="loading-fill"></div></div>
+      <div class="loading-text">IA analizando patrones de mercado...</div>
+    </div>`;
+
+  const ctx = buildMarketContext();
+  const prompt = PROMPTS[selectedMode](ctx);
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.[0]?.text || 'No se pudo obtener el análisis.';
+    renderAIResponse(text);
+  } catch(e) {
+    document.getElementById('aiBody').innerHTML = `
+      <div style="color:var(--red); padding:20px; font-family:'Space Mono',monospace; font-size:13px">
+        Error al conectar con la IA. Verifica tu conexión.
+      </div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = '⚡ Analizar Ahora';
+}
+
+function renderAIResponse(text){
+  // Convert markdown-ish to HTML
+  let html = text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gm, '<h3>$1</h3>')
+    .replace(/^# (.*$)/gm, '<h3>$1</h3>')
+    .replace(/^- (.*$)/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>(\n|$))+/g, '<ul>$&</ul>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+
+  document.getElementById('aiBody').innerHTML = `<div class="ai-response"><p>${html}</p></div>`;
+}
+
+document.getElementById('analyzeBtn').addEventListener('click', analyzeMarket);
+
+// ─── ASK ANYTHING ─────────────────────────────────────────────
+function askAbout(indexName){
+  const input = document.getElementById('askInput');
+  input.value = `¿Por qué está ${marketData[Object.values(marketData).find(d=>d.name===indexName)?.id]?.change>=0?'subiendo':'bajando'} el ${indexName} hoy?`;
+  input.focus();
+}
+
+async function askQuestion(){
+  const input = document.getElementById('askInput');
+  const question = input.value.trim();
+  if(!question) return;
+
+  const btn = document.getElementById('askBtn');
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  const resp = document.getElementById('askResponse');
+  resp.className = 'ask-response visible';
+  resp.innerHTML = '<span class="loading-text">Analizando...</span>';
+
+  const ctx = buildMarketContext();
+  const prompt = `Eres un analista financiero experto. Responde esta pregunta sobre los mercados actuales de forma clara y concisa (máx 150 palabras). Responde en español.
+
+Contexto actual del mercado:
+${ctx}
+
+Pregunta: ${question}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.[0]?.text || 'No se pudo obtener respuesta.';
+    const html = text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    resp.innerHTML = html;
+  } catch(e) {
+    resp.innerHTML = '<span style="color:var(--red)">Error de conexión con la IA.</span>';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Preguntar →';
+}
+
+document.getElementById('askBtn').addEventListener('click', askQuestion);
+document.getElementById('askInput').addEventListener('keydown', e=>{ if(e.key==='Enter') askQuestion(); });
+
+// ─── INIT + LOOP ──────────────────────────────────────────────
+initData();
+renderIndices();
+renderSectors();
+renderFear();
+renderTicker();
+updateClock();
+
+setInterval(()=>{
+  updateData();
+  renderIndices();
+  renderSectors();
+  renderFear();
+  renderTicker();
+}, 4000);
+
+setInterval(updateClock, 1000);
+</script>
+</body>
+</html>
